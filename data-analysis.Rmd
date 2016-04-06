@@ -4,6 +4,7 @@ output: html_document
 ---
 ```{r}
 library(dplyr)
+library(ggplot2)
 ```
 #Reading and looking at the data
 
@@ -21,14 +22,31 @@ data <- data[!duplicated(data),]
 data<-Filter(function(x)(length(unique(x))>1), data)
 glimpse(data)
 ```
+now we want to remove all columns that are images(probably ids or links) as they are not useful
+```{r}
+data <- data[, -grep("img$", colnames(data))]
+data <- data[, -grep("Img$", colnames(data))]
+glimpse(data)
+```
 The number of rows didnt decrease however we removed columns that are not useful, and since there is a crawl date so we will try to ingore it and see what happens
-
 ```{r}
 data <- data[!duplicated(data[,-1]),]
 glimpse(data)
 ```
-this didnt reduce the number of rows either,and after taking a look at the whole data file i noticed that the rd.rp.hr and rd.rp.mn change with every crawl which means its the time with respect to the crawel time,so we try to find an id,and there is a column that looks like a id, ## $ rd.rp.cmid   (int) 9300046, 9299640, 9299068, 9298351, 9300548,so we will use this column
+this didnt reduce the number of rows either,and after taking a look at the whole data file i noticed that the rd.rp.hr and rd.rp.mn change with every crawl which means its the time with respect to the crawel time,so we try to find an id,and there is a column that looks like the comment id, ## $ rd.rp.cmid   (int) 9300046, 9299640, 9299068, 9298351, 9300548,so we will use this column
 ```{r}
-data <- data[!duplicated(data[,17]),]
+data <- data[!duplicated(data[,16]),]
+glimpse(data)
+```
+now first we need to put the crawel date in a better format
+```{r}
+data$crawl_date <- as.POSIXct(strptime(data$crawl_date,  format="%a %b %d %H:%M:%S UTC %Y", tz="UTC"))
+glimpse(data)
+```
+now to understand both rd.rp.hr and rd.rp.mn, looking at the comment with id 9300548 in the original data,i could see that this id was found 3 times at 08:01,08:31 and 9:01 all on feb 6,their values were 23-32,24-2 and 24,32 which means its the time passed since this comment was made ,so we can subtract the time from the crawl date to get when each comment was made
+
+```{r}
+data<-Filter(function(x)(length(unique(x))>1), data)
+data$comment_time <-(data$crawl_date-(data$rd.rp.hr*60*60 + data$rd.rp.mn*60))
 glimpse(data)
 ```
