@@ -5,6 +5,7 @@ output: html_document
 ```{r}
 library(dplyr)
 library(ggplot2)
+library(tidyr)
 ```
 #Reading and looking at the data
 
@@ -50,3 +51,31 @@ data<-Filter(function(x)(length(unique(x))>1), data)
 data$comment_time <-(data$crawl_date-(data$rd.rp.hr*60*60 + data$rd.rp.mn*60))
 glimpse(data)
 ```
+#Understanding all columns
+now we understand many of the columns but there are few columns that are still not clear,these are
+```
+rd.stid 
+rd.new 
+rd.strq 
+rd.cmrq 
+```
+first i will check the possibility which is there is a road and a street and each has its own id so we will take a look at the first 100 value of each then a random 100 value
+```{r}
+head(data[c("rd.nm","rd.stid","rd.rp.stid")], n=100)
+s<-sample_n(data,100,replace=TRUE)
+head(s[c("rd.nm","rd.stid")], n=100)
+```
+looks like its not a street id however i can see that not all roads are road:street,but sometimes the street is missing so its better to seprate them to know exactly when a street is missing
+```{r}
+data <- separate (data = data,col = rd.nm, into = c("road_name","street_name") ,sep = ";")
+glimpse(data)
+```
+rd.stid looks like rd.rp.stid which is the report status id(lazeez is 2 and 7alawa is 1) so my guess it is the total status for the road which means if it have 2 reports with id 1,2 reports with id 2 and 2 reports with id 3 the total status for this road should be 2,we can try to confirm by calculating the mean of the report status ids for a road and compare it to the road status id
+```{r}
+tapply(data$rd.stid , data$rd.ri, mean,na.rm=T)
+tapply(data$rd.rp.stid , data$rd.ri, mean,na.rm=T)
+s <- filter(data, rd.ri== 696)
+tail(s[c("rd.stid")], n=50)
+tail(s[c("rd.rp.stid","street_name","comment_time")], n=50)
+```
+as we can see the numbers here have alot of different values which 
