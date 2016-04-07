@@ -49,6 +49,8 @@ now to understand both rd.rp.hr and rd.rp.mn, looking at the comment with id 930
 ```{r}
 data<-Filter(function(x)(length(unique(x))>1), data)
 data$comment_time <-(data$crawl_date-(data$rd.rp.hr*60*60 + data$rd.rp.mn*60))
+data$road_last_report <-(data$crawl_date-(data$rd.hr*60*60 + data$rd.mn*60))
+data <- select(data, -c(rd.hr,rd.mn,rd.rp.hr, rd.rp.mn))
 glimpse(data)
 ```
 #Understanding all columns
@@ -74,8 +76,4 @@ rd.stid looks like rd.rp.stid which is the report status id(lazeez is 2 and 7ala
 ```{r}
 tapply(data$rd.stid , data$rd.ri, mean,na.rm=T)
 tapply(data$rd.rp.stid , data$rd.ri, mean,na.rm=T)
-s <- filter(data, rd.ri== 696)
-tail(s[c("rd.stid")], n=50)
-tail(s[c("rd.rp.stid","street_name","comment_time")], n=50)
 ```
-as we can see the numbers here have alot of different values which 
